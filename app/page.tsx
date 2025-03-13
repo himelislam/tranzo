@@ -81,9 +81,12 @@ const languages: Language[] = [
 
 // Define status response types
 interface StatusResponse {
-  status: {
-    status: string
-  }
+  status: string
+  step?: string
+  progress?: number
+  totalFiles?: number
+  current?: number
+  translatedFile?: string
 }
 
 export default function FileTranslator() {
@@ -95,6 +98,9 @@ export default function FileTranslator() {
   const [isUploading, setIsUploading] = useState<boolean>(false)
   const [progress, setProgress] = useState<number>(0)
   const [activeTab, setActiveTab] = useState<string>("upload")
+  const [step, setStep] = useState<string>("")
+  const [totalFiles, setTotalFiles] = useState<number>(0)
+  const [currentFile, setCurrentFile] = useState<number>(0)
 
   // Handle file input change
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -142,9 +148,9 @@ export default function FileTranslator() {
         throw new Error(`Upload failed: ${uploadResponse.statusText}`)
       }
 
-      const { fileId } = (await uploadResponse.json()) as { fileId: string }
+      const { fileId, status } = (await uploadResponse.json()) as { fileId: string; status: string }
       setFileId(fileId)
-      setStatus("processing")
+      setStatus(status)
 
       // Start checking status
       checkStatus(fileId)
@@ -159,16 +165,20 @@ export default function FileTranslator() {
   // Check file processing status
   const checkStatus = async (id: string) => {
     try {
-      const statusResponse = await fetch(`${process.env.NEXT_PUBLIC_PORT}/upload/${id}`)
+      const statusResponse = await fetch(`${process.env.NEXT_PUBLIC_PORT}/status/${id}`)
 
       if (!statusResponse.ok) {
         throw new Error(`Failed to check status: ${statusResponse.statusText}`)
       }
 
-      const { status } = (await statusResponse.json()) as StatusResponse
-      setStatus(status.status)
+      const { status, step, progress, totalFiles, current } = (await statusResponse.json()) as StatusResponse
+      setStatus(status)
+      setStep(step || "")
+      setProgress(progress || 0)
+      setTotalFiles(totalFiles || 0)
+      setCurrentFile(current || 0)
 
-      if (status.status === "completed") {
+      if (status === "completed") {
         setIsUploading(false)
       } else {
         // Check again after 5 seconds
@@ -197,6 +207,9 @@ export default function FileTranslator() {
     setIsUploading(false)
     setProgress(0)
     setActiveTab("upload")
+    setStep("")
+    setTotalFiles(0)
+    setCurrentFile(0)
   }
 
   // Get status badge
@@ -235,7 +248,7 @@ export default function FileTranslator() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Globe className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">File Translator</CardTitle>
+              <CardTitle className="text-2xl">Minsitry Vineyard</CardTitle>
             </div>
             {fileId && getStatusBadge()}
           </div>
@@ -373,15 +386,15 @@ export default function FileTranslator() {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span>{status === "completed" ? "Translation complete" : "Processing your file..."}</span>
+                        <span>{step || (status === "completed" ? "Translation complete" : "Processing your file...")}</span>
                         <span>{Math.round(progress)}%</span>
                       </div>
                       <Progress value={progress} className="h-2" />
                     </div>
 
-                    {status === "processing" && (
+                    {totalFiles > 0 && (
                       <p className="text-xs text-muted-foreground italic">
-                        This may take a few minutes depending on file size
+                        Processing file {currentFile} of {totalFiles}
                       </p>
                     )}
                   </div>
@@ -423,4 +436,3 @@ export default function FileTranslator() {
     </div>
   )
 }
-
