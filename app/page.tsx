@@ -248,7 +248,7 @@ export default function FileTranslator() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Globe className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">Minsitry Vineyard</CardTitle>
+              <CardTitle className="text-2xl">Tranzo Minstry Vineyard</CardTitle>
             </div>
             {fileId && getStatusBadge()}
           </div>
