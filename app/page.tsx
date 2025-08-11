@@ -386,7 +386,7 @@ export default function FileTranslator() {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span>{(status === "completed" ? "Translation complete" : "Processing your file...")}</span>
+                        <span>{step || (status === "completed" ? "Translation complete" : "Processing your file...")}</span>
                         <span>{Math.round(progress)}%</span>
                       </div>
                       <Progress value={progress} className="h-2" />
